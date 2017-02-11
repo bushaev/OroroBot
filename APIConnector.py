@@ -25,7 +25,8 @@ class APIConnector:
                 handler(r.status_code)
             else:
                 return r
-        return handler(r.status_code, True)
+        handler(r.status_code, True)
+        return r
 
     def try_get(self, url, handler, data=None):
         return self.try_request(self.get, url, handler, data)
@@ -51,12 +52,12 @@ class APIRequestSender:
     def show_list_json(self):
         return self.try_get_json("https://ororo.tv/api/v2/shows")
 
-    def show(self, id):
+    def show_json(self, id):
         return self.try_get_json('https://ororo.tv/api/v2/shows/{0}'.format(
             id
         ))
 
-    def episode(self, id):
+    def episode_json(self, id):
         return self.try_get_json('https://ororo.tv/api/v2/episodes/{0}'.format(
             id
         ))

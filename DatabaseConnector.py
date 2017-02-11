@@ -15,8 +15,8 @@ user_episode_table = Table('association_ue', Base.metadata,
                          Column('left_id', Integer, ForeignKey('Users.id')),
                          Column('right_id', Integer, ForeignKey('Episodes.id'))
                      )
- 
-    
+
+
 class UserModel(Base):
     __tablename__ = 'Users'
     id = Column(Integer, primary_key=True)
@@ -63,7 +63,7 @@ class Database:
     class __Database:
         def __init__(self):
             logging.info('Initializing database...')
-            self.engine = create_engine('mysql+pymysql://root:chrome12@localhost:3306/test2?charset=utf8', convert_unicode=True)
+            self.engine = create_engine('mysql+pymysql://root:root@localhost:3306/test?charset=utf8', convert_unicode=True)
             Base.metadata.bind = self.engine
             Base.metadata.create_all()
             self.sessions = sessionmaker(bind=self.engine)
@@ -78,7 +78,7 @@ class Database:
             for user in show.subscribers:
                 user.episodes_to_watch.append(episode)
             self.ses.commit()
-        
+
         def delete_episode_from_user_list(self, user_id, episode_id):
             user = self.get_user(user_id)
             episode = self.get_episode(episode_id)
@@ -101,6 +101,9 @@ class Database:
                 self.ses.rollback()
                 logging.warning('tried to add episode with already existing id {0}'.format(id))
 
+        def delete_all_episodes(self):
+            logging.warning('Deleting all episodes')
+            self.ses.query(EpisodeModel).delete()
 
         def get_all_users(self):
             logging.info('Get all users query')
@@ -125,10 +128,6 @@ class Database:
             for user in self.get_all_users():
                 self.ses.delete(user)
             self.ses.commit()
-        
-        def delete_all_episodes(self):
-            logging.warning('Deleting all episodes')
-            self.ses.query(EpisodeModel).delete()
 
         def add_show(self, id, name, poster_url, rating, desc, idbm_id, slug, newest_video):
             show = ShowModel(id=id, name=name, poster_url=poster_url, rating=rating, desc=desc, idbm_id=idbm_id, slug=slug, newest_video=newest_video)
@@ -147,7 +146,16 @@ class Database:
         def get_show(self, show_id):
             logging.info('Getting show with id {0}'.format(show_id));
             return self.ses.query(ShowModel).filter(ShowModel.id == show_id).first()
-        
+
+        def update_show_newest_video(self, show_id, newest_video):
+            show = self.get_show(show_id)
+            if (show):
+                show.newest_video = newest_video
+                sef.ses.commit()
+                logging.info('Successfuly update show {0} newest_video to {1}'.format(
+                    show, newest_video
+                ))
+
         def subscribe_user(self, user_id, show_id):
             user = self.get_user(user_id)
             show = self.get_show(show_id)
@@ -157,7 +165,7 @@ class Database:
                 self.ses.commit()
                 return True
             else:
-                logging.warning('Couldn\' find user or show for subscription')
+                logging.warning('Couldn\'t find user or show for subscription')
                 return False
 
         def unsubscribe_user(self, user_id, show_id):
@@ -184,7 +192,7 @@ class Database:
         if not Database.instance:
             Database.instance = Database.__Database()
 
-    
+
     def get_all_users(self):
         return Database.instance.get_all_users()
 
@@ -196,7 +204,7 @@ class Database:
 
     def delete_all_users(self):
         return Database.instance.delete_all_users()
-    
+
     def add_show(self, id, name, poster_url="", rating=0, desc="", idbm_id=0, slug="", newest_video=0):
         Database.instance.add_show(id, name, poster_url, rating, desc, idbm_id, slug, newest_video)
 
@@ -205,6 +213,9 @@ class Database:
 
     def get_show(self, show_id):
         return Database.instance.get_show(show_id)
+
+    def update_show_newest_video(self, show_id, newest_video):
+        Database.instance.update_show_newest_video(show_id, newest_video)
 
     def add_episode(self, id, name="", desc="", show=1, season=1, episode=1):
         Database.instance.add_episode(id, name, desc, show, season, episode)
@@ -223,7 +234,3 @@ class Database:
 
     def delete_episode_from_user_list(self, user_id, episode_id):
         Database.instance.delete_episode_from_user_list(user_id, episode_id)
-
-
-for user in Database().get_all_users():
-    print (user)

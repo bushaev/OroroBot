@@ -1,4 +1,5 @@
 import logging
+from DatabaseConnector import Database
 class AdminPage:
     def __init__(self, bot):
         self.admins = [82755431]
@@ -16,6 +17,10 @@ class AdminPage:
 
     def is_admin(self, id):
         return id in self.admins
+
+    def get_admin(self):
+        db = Database()
+        return db.get_user(self.admins[0])
 
     def handle_api_error(self, error_code, flag=False):
         if flag:
