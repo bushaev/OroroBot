@@ -24,6 +24,7 @@ class UserModel(Base):
     first_name = Column(String(100, collation='utf8_bin'))
     last_name = Column(String(100, collation='utf8_bin'))
     username = Column(String(100))
+    language = Column(Integer)
     shows_subscribed = relationship("ShowModel", secondary=user_show_table, backref='subscribers')
     episodes_to_watch = relationship("EpisodeModel", secondary=user_episode_table, backref='subscribers')
 
@@ -63,7 +64,7 @@ class Database:
     class __Database:
         def __init__(self):
             logging.info('Initializing database...')
-            self.engine = create_engine('mysql+pymysql://root:root@localhost:3306/test?charset=utf8', convert_unicode=True)
+            self.engine = create_engine('mysql+pymysql://root:root@localhost:3306/test1?charset=utf8', convert_unicode=True)
             Base.metadata.bind = self.engine
             Base.metadata.create_all()
             self.sessions = sessionmaker(bind=self.engine)
@@ -74,12 +75,14 @@ class Database:
             return self.ses.query(EpisodeModel).filter(EpisodeModel.id == id).first()
 
         def update_users_episodes(self, show_id, episode):
+            logging.info('Update User episodes')
             show = self.get_show(show_id)
             for user in show.subscribers:
                 user.episodes_to_watch.append(episode)
             self.ses.commit()
 
         def delete_episode_from_user_list(self, user_id, episode_id):
+            logging.info('delete episode from user list')
             user = self.get_user(user_id)
             episode = self.get_episode(episode_id)
             if user and episode:
@@ -95,10 +98,11 @@ class Database:
             try:
                 self.ses.add(episode)
                 self.ses.commit()
-                logging.info('Added new episode with id {0}'.format(id))
                 self.update_users_episodes(show_id, episode)
+                logging.info('Added new episode with id {0}'.format(id))
             except sqlalchemy.exc.IntegrityError:
                 self.ses.rollback()
+                self.update_users_episodes(show_id, self.get_episode(id))
                 logging.warning('tried to add episode with already existing id {0}'.format(id))
 
         def delete_all_episodes(self):
@@ -122,6 +126,16 @@ class Database:
         def get_user(self, user_id):
             logging.info('Getting user with id {0}'.format(user_id))
             return self.ses.query(UserModel).filter(UserModel.id == user_id).first()
+
+        def set_user_language(self, user_id, lang):
+            logging.info('setting language %s for user %s', lang, user_id)
+            user = self.get_user(user_id)
+            if user:
+                user = self.get_user(user_id)
+                user.language = lang
+                self.ses.commit()
+            else:
+                logging.warning('couldn\'t find user to update language')
 
         def delete_all_users(self):
             logging.warning('Deleting all users')
@@ -151,7 +165,7 @@ class Database:
             show = self.get_show(show_id)
             if (show):
                 show.newest_video = newest_video
-                sef.ses.commit()
+                self.ses.commit()
                 logging.info('Successfuly update show {0} newest_video to {1}'.format(
                     show, newest_video
                 ))
@@ -205,6 +219,9 @@ class Database:
     def delete_all_users(self):
         return Database.instance.delete_all_users()
 
+    def set_user_language(self, user_id, lang):
+        Database.instance.set_user_language(user_id, lang)
+
     def add_show(self, id, name, poster_url="", rating=0, desc="", idbm_id=0, slug="", newest_video=0):
         Database.instance.add_show(id, name, poster_url, rating, desc, idbm_id, slug, newest_video)
 
@@ -234,3 +251,16 @@ class Database:
 
     def delete_episode_from_user_list(self, user_id, episode_id):
         Database.instance.delete_episode_from_user_list(user_id, episode_id)
+
+# def new_users():
+#     with open('users', 'r') as f:
+#         id = f.readline()
+#         chat_id = f.readline()
+#         name = f.readline()
+#         last = f.readline()
+#         username = f.readline()
+#         db.add_user(id, chat_id, name, last, username)
+#         db.set_user_language(id, 0)
+#
+# db=Database()
+# new_users()
