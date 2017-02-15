@@ -43,6 +43,11 @@ class MessageHandler:
             ), reply_markup=Keyboards.main(user.id, self.admin.is_admin(user.id)))
             self.bot.answerCallbackQuery(query_id, Messages.success[user.language])
             self.user_step[from_id] = 0
+        elif type is 4:
+            user = self.db.get_user(data[1])
+            for index, show in enumerate(user.shows_subscribed):
+                self.bot.sendMessage(from_id, '{0}. {1}'.format(index + 1, show.name))
+            self.bot.answerCallbackQuery(query_id, Messages.success[1])
         else:
             pass
 
@@ -111,6 +116,10 @@ class MessageHandler:
                 for i, show in enumerate(us.shows_subscribed):
                     self.bot.sendMessage(id, str(i + 1) + '. ' + show.name)
             elif command in Messages.cancel:
+                if self.user_step[id] == 4:
+                    self.user_step[id] = 0
+                    self.bot.sendMessage(id, Messages.choose_action[lan],
+                                                reply_markup = Keyboards.admin)
                 self.bot.sendMessage(id, Messages.choose_action[lan],
                                             reply_markup = Keyboards.main(id,
                                                     self.admin.is_admin(id)))
@@ -125,8 +134,16 @@ class MessageHandler:
                         for user in self.db.get_all_users():
                             self.bot.sendMessage(id, '{0}\n{1}\n@{2}'.format(
                                 user.id, user.first_name, user.username
-                            ), reply_markup=Keyboards.admin)
+                            ), reply_markup=Keyboards.user_subscribtions(user.id))
                         return
+                    if command == 'Send to all':
+                        self.user_step[id] = 4
+                        self.bot.sendMessage(id, 'Enter your message',
+                                                    reply_markup=Keyboards.cancel(0))
+                        return
+                    if id in self.user_step and self.user_step[id] == 4:
+                        for user in self.db.get_all_users():
+                            self.bot.sendMessage(user.id, command)
                 if (id not in self.user_step or
                         self.user_step[id] != 2 and
                         self.user_step[id] != 3):

@@ -157,6 +157,13 @@ class Keyboards:
         return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
     @staticmethod
+    def user_subscribtions(user_id):
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text='Subscribtions',
+                                    callback_data='{0} {1}'.format(4, user_id))]
+        ])
+
+    @staticmethod
     def episode(episode_id, lan):
         logging.debug('Getting episode keyboard for episode id %s', episode_id)
         first_raw = [InlineKeyboardButton(text=Messages.watched[lan],
