@@ -25,13 +25,12 @@ def get_latest_episode(episodes):
     for episode in episodes:
         if curent_latest is None:
             curent_latest = episode
-        elif curent_latest['season'] < episode['season']:
+        elif int(curent_latest['season']) < int(episode['season']):
             curent_latest = episode
-        elif curent_latest['season'] == episode['season'] and curent_latest['number'] < episode['number']:
+        elif (curent_latest['season'] == episode['season']) and (int(curent_latest['number']) < int(episode['number'])):
             curent_latest = episode
 
     return curent_latest
-
 
 def update_tv_shows(api, db, bot):
     logging.info('Updating TV Show')
@@ -104,6 +103,12 @@ if __name__ == '__main__':
     handle = MessageHandler(bot, admin)
     api = APIRequestSender((login, password), admin.handle_api_error)
 
+    ng = api.show_json(43)
+    from pprint import pprint
+#pprint(ng)
+    pprint (get_latest_episode(ng['episodes']))
+    exit(0)
+
     try:
         bot.message_loop({'chat': handle.on_chat_message
                          ,'callback_query' : handle.on_callback_query})
@@ -116,3 +121,4 @@ if __name__ == '__main__':
     except:
         admin.notify_one("Critical. bot is down. Please check logs or contact Vitaly Bushaev @bushaev")
         raise
+

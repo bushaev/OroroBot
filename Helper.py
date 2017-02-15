@@ -4,6 +4,10 @@ from DatabaseConnector import Database
 import logging
 
 class Messages:
+    exception = [
+        "Something happend, while processing your request. Developers are notified of the problem, we'll try to fix it as soon as possible",
+        u'Что-то произошло во время обработки вашего запроса. Разработчки уведомлены о проблеме, мы попытаемся починить это как можно быстрее.'
+    ]
     not_subscribed = [
         "Unfortunetaly, you've not yet subscribed to any tv shows to follow.",
         u'К сожалению, Вы еще не подписались ни на один сериал.'

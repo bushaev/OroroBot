@@ -80,6 +80,11 @@ class MessageHandler:
         else:
             lan = us.language
 
+        if lan == None:
+            self.bot.sendMessage(id, 'Choose language', reply_markup=Keyboards.languages)
+            return
+
+            
         try:
             command = msg['text']
             logging.info('%s', command)
@@ -120,6 +125,7 @@ class MessageHandler:
                     self.user_step[id] = 0
                     self.bot.sendMessage(id, Messages.choose_action[lan],
                                                 reply_markup = Keyboards.admin)
+                    return
                 self.bot.sendMessage(id, Messages.choose_action[lan],
                                             reply_markup = Keyboards.main(id,
                                                     self.admin.is_admin(id)))
@@ -157,5 +163,8 @@ class MessageHandler:
                                             command, lan, self.user_step[id]))
 
         except:
-            self.bot.sendMessage(id, 'We only support text messages')
-            raise
+            if lan == None:
+                lan = 0
+            self.bot.sendMessage(id, Messages.exception[lan]);
+            import sys
+            self.admin.notify_one(sys.exc_info()[0])
