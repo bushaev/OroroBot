@@ -76,7 +76,7 @@ class Database:
         def __init__(self):
             logging.info('Initializing database...')
             self.engine = create_engine(
-                'mysql+pymysql://root:root@localhost:3306/test1?charset=utf8',
+                'mysql+pymysql://root:chrome12@localhost:3306/test3?charset=utf8',
                 convert_unicode=True)
             Base.metadata.bind = self.engine
             Base.metadata.create_all()

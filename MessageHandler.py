@@ -146,7 +146,7 @@ class MessageHandler:
                 for i, show in enumerate(us.shows_subscribed):
                     self.bot.sendMessage(id, str(i + 1) + '. ' + show.name)
             elif command in Messages.cancel:
-                if self.user_step[id] == 4:
+                if self.user_step[id] == 4 or self.user_step[id] == 5:
                     self.user_step[id] = 0
                     self.bot.sendMessage(id, Messages.choose_action[lan],
                                          reply_markup=Keyboards.admin)
@@ -172,9 +172,38 @@ class MessageHandler:
                         self.bot.sendMessage(id, 'Enter your message',
                                              reply_markup=Keyboards.cancel(0))
                         return
-                    if id in self.user_step and self.user_step[id] == 4:
-                        for user in self.db.get_all_users():
-                            self.bot.sendMessage(user.id, command)
+                    if command == 'Send to user':
+                        self.user_step[id] = 5
+                        self.bot.sendMessage(id,
+                                             'Please enter user_id and your message',
+                                             reply_markup=Keyboards.cancel(0))
+                        return
+                    if id in self.user_step: 
+                        if self.user_step[id] == 4:
+                            for user in self.db.get_all_users():
+                                self.bot.sendMessage(user.id, command)
+                        elif self.user_step[id] == 5:
+                                uid, *_ = command.split()
+                                message = command[len(uid) + 1:]
+                                self.bot.sendMessage(uid, message)
+                        elif self.user_step[id] == 2 or self.user_step[id] == 3:
+                            self.bot.sendMessage(id, Messages.possible_shows[lan],
+                                                 reply_markup=Keyboards.similar_shows(
+                                                     command, lan, self.user_step[id]))
+                        else:
+                            self.bot.sendMessage(id, Messages.dont_understand[lan],
+                                                    reply_markup=Keyboards.main(id,
+                                                                                is_admin))
+                            self.user_step[id] = 0
+                            return
+                                
+                            
+                        self.user_step[id] = 0
+                        self.bot.sendMessage(id, 'Success',
+                                             reply_markup=Keyboards.admin)
+                        return
+
+
                 if (id not in self.user_step or
                         self.user_step[id] != 2 and
                         self.user_step[id] != 3):

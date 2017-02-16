@@ -142,7 +142,8 @@ class Keyboards:
     ], resize_keyboard=True)
 
     admin = ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text='Send to all')],
+        [KeyboardButton(text='Send to all'),
+         KeyboardButton(text='Send to user')],
         [KeyboardButton(text='See user list')],
         [KeyboardButton(text='Main keyboard')],
     ])
