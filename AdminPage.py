@@ -1,6 +1,9 @@
 import logging
 from DatabaseConnector import Database
+
+
 class AdminPage:
+
     def __init__(self, bot):
         self.admins = [82755431, 89917125, 157322980]
         self.bot = bot
@@ -27,17 +30,19 @@ class AdminPage:
 
     def handle_api_error(self, error_code, flag=False):
         if flag:
-            msg = "Connection refused 3 times in a row with code {0}".format(error_code)
+            msg = "Connection refused 3 times in a row with code {0}".format(
+                error_code)
             logging.critical(msg)
             self.notify_all(msg)
             return
 
-        if  401 <= error_code <= 404:
+        if 401 <= error_code <= 404:
             msg = "Connection to API refused with error {0}".format(error_code)
             self.notify_all(msg)
             logging.critical(msg)
         else:
-            logging.error("Connection to API refused with error {0}".format(error_code))
+            logging.error(
+                "Connection to API refused with error {0}".format(error_code))
 
     def notify_all_users(msg):
         logging.debug('Send message to all users {0}'.format(msg))

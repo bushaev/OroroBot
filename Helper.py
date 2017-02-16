@@ -3,11 +3,11 @@ from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 from DatabaseConnector import Database
 import logging
 
+
 class Messages:
     exception = [
         "Something happend, while processing your request. Developers are notified of the problem, we'll try to fix it as soon as possible",
-        u'Что-то произошло во время обработки вашего запроса. Разработчки уведомлены о проблеме, мы попытаемся починить это как можно быстрее.'
-    ]
+        u'Что-то произошло во время обработки вашего запроса. Разработчки уведомлены о проблеме, мы попытаемся починить это как можно быстрее.']
     not_subscribed = [
         "Unfortunetaly, you've not yet subscribed to any tv shows to follow.",
         u'К сожалению, Вы еще не подписались ни на один сериал.'
@@ -111,6 +111,7 @@ class Messages:
         ]
         return message[language] + name
 
+
 def distance(a, b):
     "Calculates the Levenshtein distance between a and b."
     n, m = len(a), len(b)
@@ -119,23 +120,26 @@ def distance(a, b):
         a, b = b, a
         n, m = m, n
 
-    current_row = range(n+1) # Keep current and previous row, not entire matrix
-    for i in range(1, m+1):
-        previous_row, current_row = current_row, [i]+[0]*n
-        for j in range(1,n+1):
-            add, delete, change = previous_row[j]+1, current_row[j-1]+1, previous_row[j-1]
-            if a[j-1] != b[i-1]:
+    # Keep current and previous row, not entire matrix
+    current_row = range(n + 1)
+    for i in range(1, m + 1):
+        previous_row, current_row = current_row, [i] + [0] * n
+        for j in range(1, n + 1):
+            add, delete, change = previous_row[
+                j] + 1, current_row[j - 1] + 1, previous_row[j - 1]
+            if a[j - 1] != b[i - 1]:
                 change += 1
             current_row[j] = min(add, delete, change)
 
     return current_row[n]
 
+
 class Keyboards:
 
     languages = ReplyKeyboardMarkup(keyboard=[
-             [KeyboardButton(text=Messages.choose_language[0])],
-             [KeyboardButton(text=Messages.choose_language[1])],
-         ], resize_keyboard=True)
+        [KeyboardButton(text=Messages.choose_language[0])],
+        [KeyboardButton(text=Messages.choose_language[1])],
+    ], resize_keyboard=True)
 
     admin = ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text='Send to all')],
@@ -172,12 +176,12 @@ class Keyboards:
         logging.debug('Getting episode keyboard for episode id %s', episode_id)
         first_raw = [InlineKeyboardButton(text=Messages.watched[lan],
                                           callback_data='{0} {1}'.format(
-                                                            1, episode_id))]
+            1, episode_id))]
         return InlineKeyboardMarkup(inline_keyboard=[first_raw])
 
     @staticmethod
     def cancel(lan):
-        return ReplyKeyboardMarkup(keyboard = [
+        return ReplyKeyboardMarkup(keyboard=[
             [KeyboardButton(text=Messages.cancel[lan])]
         ], resize_keyboard=True)
 
@@ -185,7 +189,10 @@ class Keyboards:
     def similar_shows(msg, lan, type):
         possible_shows = []
         for show in Database().get_all_shows():
-            if distance(msg.lower(), show.name.lower()) < len(show.name) / 2 - 1:
+            if distance(
+                    msg.lower(),
+                    show.name.lower()) < len(
+                    show.name) / 2 - 1:
                 possible_shows.append(show)
 
         if (len(possible_shows) == 0):
@@ -194,8 +201,6 @@ class Keyboards:
         inline_keyboard = []
         for show in possible_shows:
             logging.debug('Found similar show %s', show.name)
-            inline_keyboard.append([InlineKeyboardButton(text=show.name,
-                                callback_data='{0} {1}'.format(
-                                    type, show.id
-                                ))])
+            inline_keyboard.append([InlineKeyboardButton(
+                text=show.name, callback_data='{0} {1}'.format(type, show.id))])
         return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)

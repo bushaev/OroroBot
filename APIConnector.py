@@ -1,21 +1,23 @@
 import requests
 
+
 class APIConnector:
+
     def __init__(self, credentials):
         self.login, self.password = credentials
 
     def get(self, url, data=None):
         return requests.get(url, auth=(self.login, self.password),
-                            headers = {'User-Agent' : 'runscope/0.1'})
+                            headers={'User-Agent': 'runscope/0.1'})
 
     def post(self, url, data=None):
         return requests.post(url, auth=(self.login, self.password),
-                            headers = {'User-Agent' : 'runscope/0.1'},
-                            data=data)
+                             headers={'User-Agent': 'runscope/0.1'},
+                             data=data)
 
     def put(self, url, data=None):
         return requests.put(url, auth=(self.login, self.password),
-                            headers = {'User-Agent' : 'runscope/0.1'},
+                            headers={'User-Agent': 'runscope/0.1'},
                             data=data)
 
     def try_request(self, req, url, handler, data=None):
@@ -37,7 +39,9 @@ class APIConnector:
     def try_put(self, url, handler, data=None):
         return self.try_request(self.put, url, handler, data)
 
+
 class APIRequestSender:
+
     def __init__(self, credentials, handler):
         self.con = APIConnector(credentials)
         self.handler = handler

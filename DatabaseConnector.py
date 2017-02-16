@@ -8,13 +8,13 @@ import sqlalchemy
 Base = declarative_base()
 
 user_show_table = Table('association_us', Base.metadata,
-                    Column('left_id', Integer, ForeignKey('Users.id')),
-                    Column('right_id', Integer, ForeignKey('Shows_c.id'))
-                  )
-user_episode_table = Table('association_ue', Base.metadata,
-                         Column('left_id', Integer, ForeignKey('Users.id')),
-                         Column('right_id', Integer, ForeignKey('Episodes.id'))
-                     )
+                        Column('left_id', Integer, ForeignKey('Users.id')),
+                        Column('right_id', Integer, ForeignKey('Shows_c.id'))
+                        )
+user_episode_table = Table(
+    'association_ue', Base.metadata, Column(
+        'left_id', Integer, ForeignKey('Users.id')), Column(
+            'right_id', Integer, ForeignKey('Episodes.id')))
 
 
 class UserModel(Base):
@@ -25,15 +25,22 @@ class UserModel(Base):
     last_name = Column(String(100, collation='utf8_bin'))
     username = Column(String(100))
     language = Column(Integer)
-    shows_subscribed = relationship("ShowModel", secondary=user_show_table, backref='subscribers')
-    episodes_to_watch = relationship("EpisodeModel", secondary=user_episode_table, backref='subscribers')
+    shows_subscribed = relationship(
+        "ShowModel",
+        secondary=user_show_table,
+        backref='subscribers')
+    episodes_to_watch = relationship(
+        "EpisodeModel",
+        secondary=user_episode_table,
+        backref='subscribers')
 
     def __repr__(self):
         return 'User (id=%s first_name=%s last_name=%s username=%s)' % (
-             self.id, self.first_name, self.last_name, self.username)
+            self.id, self.first_name, self.last_name, self.username)
+
 
 class ShowModel(Base):
-    __tablename__ = 'Shows_c' #change
+    __tablename__ = 'Shows_c'  # change
     id = Column(Integer, primary_key=True)
     name = Column(String(150))
     poster_url = Column(String(300))
@@ -45,6 +52,7 @@ class ShowModel(Base):
 
     def __repr__(self):
         return 'Show (name=%s)' % (self.name)
+
 
 class EpisodeModel(Base):
     __tablename__ = 'Episodes'
@@ -58,13 +66,18 @@ class EpisodeModel(Base):
 
     def __repr__(self):
         return 'Episode %s (show=%s, s=%s e=%s)' % (
-                self.name, self.show.name, self.season, self.number )
+            self.name, self.show.name, self.season, self.number)
+
 
 class Database:
+
     class __Database:
+
         def __init__(self):
             logging.info('Initializing database...')
-            self.engine = create_engine('mysql+pymysql://root:root@localhost:3306/test1?charset=utf8', convert_unicode=True)
+            self.engine = create_engine(
+                'mysql+pymysql://root:root@localhost:3306/test1?charset=utf8',
+                convert_unicode=True)
             Base.metadata.bind = self.engine
             Base.metadata.create_all()
             self.sessions = sessionmaker(bind=self.engine)
@@ -72,7 +85,8 @@ class Database:
 
         def get_episode(self, id):
             logging.info('Get episode with id {0}'.format(id))
-            return self.ses.query(EpisodeModel).filter(EpisodeModel.id == id).first()
+            return self.ses.query(EpisodeModel).filter(
+                EpisodeModel.id == id).first()
 
         def update_users_episodes(self, show_id, episode):
             logging.info('Update User episodes')
@@ -88,13 +102,25 @@ class Database:
             if user and episode:
                 try:
                     user.episodes_to_watch.remove(episode)
-                    logging.info('Deleting episode {0} from user {1} list'.format(user, episode))
+                    logging.info(
+                        'Deleting episode {0} from user {1} list'.format(
+                            user, episode))
                 except:
                     pass
 
         def add_episode(self, id, name, desc, show_id, season, number):
-            logging.info('Adding new episode for {0} show {1} {2}', self.get_show(show_id), season, number)
-            episode = EpisodeModel(id=id, name=name, desc=desc, show_id=show_id, season=season, number=number)
+            logging.info(
+                'Adding new episode for {0} show {1} {2}',
+                self.get_show(show_id),
+                season,
+                number)
+            episode = EpisodeModel(
+                id=id,
+                name=name,
+                desc=desc,
+                show_id=show_id,
+                season=season,
+                number=number)
             try:
                 self.ses.add(episode)
                 self.ses.commit()
@@ -103,7 +129,8 @@ class Database:
             except sqlalchemy.exc.IntegrityError:
                 self.ses.rollback()
                 self.update_users_episodes(show_id, self.get_episode(id))
-                logging.warning('tried to add episode with already existing id {0}'.format(id))
+                logging.warning(
+                    'tried to add episode with already existing id {0}'.format(id))
 
         def delete_all_episodes(self):
             logging.warning('Deleting all episodes')
@@ -114,18 +141,25 @@ class Database:
             return self.ses.query(UserModel).all()
 
         def add_user(self, id, chat_id, first_name, last_name, username):
-            user = UserModel(id=id, chat_id=chat_id, first_name=first_name, last_name=last_name, username=username)
+            user = UserModel(
+                id=id,
+                chat_id=chat_id,
+                first_name=first_name,
+                last_name=last_name,
+                username=username)
             try:
                 self.ses.add(user)
                 self.ses.commit()
                 logging.info('Added new user with id {0}'.format(id))
             except sqlalchemy.exc.IntegrityError:
                 self.ses.rollback()
-                logging.warning('tried to add user with already existing id {0}'.format(user))
+                logging.warning(
+                    'tried to add user with already existing id {0}'.format(user))
 
         def get_user(self, user_id):
             logging.info('Getting user with id {0}'.format(user_id))
-            return self.ses.query(UserModel).filter(UserModel.id == user_id).first()
+            return self.ses.query(UserModel).filter(
+                UserModel.id == user_id).first()
 
         def set_user_language(self, user_id, lang):
             logging.info('setting language %s for user %s', lang, user_id)
@@ -143,38 +177,59 @@ class Database:
                 self.ses.delete(user)
             self.ses.commit()
 
-        def add_show(self, id, name, poster_url, rating, desc, idbm_id, slug, newest_video):
-            show = ShowModel(id=id, name=name, poster_url=poster_url, rating=rating, desc=desc, idbm_id=idbm_id, slug=slug, newest_video=newest_video)
+        def add_show(
+                self,
+                id,
+                name,
+                poster_url,
+                rating,
+                desc,
+                idbm_id,
+                slug,
+                newest_video):
+            show = ShowModel(
+                id=id,
+                name=name,
+                poster_url=poster_url,
+                rating=rating,
+                desc=desc,
+                idbm_id=idbm_id,
+                slug=slug,
+                newest_video=newest_video)
             try:
                 self.ses.add(show)
                 self.ses.commit()
                 logging.info('Added new show {0}'.format(show))
             except sqlalchemy.exc.IntegrityError:
                 self.ses.rollback()
-                logging.warning('Tried to add show with id that is already taken {0}'.format(show))
+                logging.warning(
+                    'Tried to add show with id that is already taken {0}'.format(show))
 
         def get_all_shows(self):
             logging.info('Get all shows entry')
             return self.ses.query(ShowModel).all()
 
         def get_show(self, show_id):
-            logging.info('Getting show with id {0}'.format(show_id));
-            return self.ses.query(ShowModel).filter(ShowModel.id == show_id).first()
+            logging.info('Getting show with id {0}'.format(show_id))
+            return self.ses.query(ShowModel).filter(
+                ShowModel.id == show_id).first()
 
         def update_show_newest_video(self, show_id, newest_video):
             show = self.get_show(show_id)
             if (show):
                 show.newest_video = newest_video
                 self.ses.commit()
-                logging.info('Successfuly update show {0} newest_video to {1}'.format(
-                    show, newest_video
-                ))
+                logging.info(
+                    'Successfuly update show {0} newest_video to {1}'.format(
+                        show, newest_video))
 
         def subscribe_user(self, user_id, show_id):
             user = self.get_user(user_id)
             show = self.get_show(show_id)
             if (user and show):
-                logging.info('Subscribing user {0} to show {1}'.format(user, show))
+                logging.info(
+                    'Subscribing user {0} to show {1}'.format(
+                        user, show))
                 user.shows_subscribed.append(show)
                 self.ses.commit()
                 return True
@@ -186,19 +241,21 @@ class Database:
             user = self.get_user(user_id)
             show = self.get_show(show_id)
             if user and show:
-                logging.info('Unsubscribing user {0} from show {1}'.format(user, show))
+                logging.info(
+                    'Unsubscribing user {0} from show {1}'.format(
+                        user, show))
                 try:
                     user.shows_subscribed.remove(show)
                     self.ses.commit()
                 except ValueError:
-                    logging.warning('Tried to unsibscribe user {0} from show {1} that user never been subscribed to'.format(user, show))
+                    logging.warning(
+                        'Tried to unsibscribe user {0} from show {1} that user never been subscribed to'.format(
+                            user, show))
                 return True
             else:
-                logging.warning('Couldn\' find user or show for unsubscription')
+                logging.warning(
+                    'Couldn\' find user or show for unsubscription')
                 return False
-
-
-
 
     instance = None
 
@@ -206,12 +263,18 @@ class Database:
         if not Database.instance:
             Database.instance = Database.__Database()
 
-
     def get_all_users(self):
         return Database.instance.get_all_users()
 
-    def add_user(self, id, chat_id=id, first_name="", last_name="", username=""):
-        Database.instance.add_user(id, chat_id, first_name, last_name, username)
+    def add_user(
+            self,
+            id,
+            chat_id=id,
+            first_name="",
+            last_name="",
+            username=""):
+        Database.instance.add_user(
+            id, chat_id, first_name, last_name, username)
 
     def get_user(self, user_id):
         return Database.instance.get_user(user_id)
@@ -222,8 +285,25 @@ class Database:
     def set_user_language(self, user_id, lang):
         Database.instance.set_user_language(user_id, lang)
 
-    def add_show(self, id, name, poster_url="", rating=0, desc="", idbm_id=0, slug="", newest_video=0):
-        Database.instance.add_show(id, name, poster_url, rating, desc, idbm_id, slug, newest_video)
+    def add_show(
+            self,
+            id,
+            name,
+            poster_url="",
+            rating=0,
+            desc="",
+            idbm_id=0,
+            slug="",
+            newest_video=0):
+        Database.instance.add_show(
+            id,
+            name,
+            poster_url,
+            rating,
+            desc,
+            idbm_id,
+            slug,
+            newest_video)
 
     def get_all_shows(self):
         return Database.instance.get_all_shows()
