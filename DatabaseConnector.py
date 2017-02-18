@@ -110,7 +110,7 @@ class Database:
 
         def add_episode(self, id, name, desc, show_id, season, number):
             logging.info(
-                'Adding new episode for {0} show {1} {2}',
+                'Adding new episode for %s show %s %s',
                 self.get_show(show_id),
                 season,
                 number)
