@@ -62,8 +62,11 @@ class AdminPage:
                 ), reply_markup=Keyboards.user_subscribtions(user.id))
         elif msg == 'Send to all':
             steps[id] = 4
-            self.bot.sendMessage(id, 'Enter your message',
-                                 reply_markup=Keyboards.cancel(0))
+            try:
+                self.bot.sendMessage(id, 'Enter your message',
+                                    reply_markup=Keyboards.cancel(0))
+            except Exception as e:
+                logging.error("couldnt send message %s", e)
         elif msg == 'Send to user':
             steps[id] = 5
             self.bot.sendMessage(id,
@@ -72,7 +75,11 @@ class AdminPage:
         elif step in [4, 5]:
             if step == 4:
                 for user in self.db.get_all_users():
-                    self.bot.sendMessage(user.id, msg)
+                    logging.info('Trying to send a message to user %s', id)
+                    try:
+                        self.bot.sendMessage(user.id, msg)
+                    except Exception as e:
+                        logging.error('Looks like bot has been blocked %s', e)
             elif step == 5:
                 uid, *_ = msg.split()
                 message = msg[len(uid) + 1:]

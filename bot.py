@@ -67,11 +67,15 @@ def update_tv_shows(api, db, bot):
                 episode['number']
             )
             for user in show_db.subscribers:
-                bot.sendMessage(user.id, Messages.new_episode(
-                    show_db.name + "\n" + episode['name'] +
-                    '\nSeason: ' + str(episode['season']) +
-                    '\nEpisode' + str(episode['number']), user.language
-                ))
+                try:
+                    logging.info("Notifying user %s", user.id)
+                    bot.sendMessage(user.id, Messages.new_episode(
+                        show_db.name + "\n" + episode['name'] +
+                        '\nSeason: ' + str(episode['season']) +
+                        '\nEpisode' + str(episode['number']), user.language
+                    ))
+                except Exception as e:
+                    logging.error('Looks like bot has been blocked %s', e)
 
 
 if __name__ == '__main__':
