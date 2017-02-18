@@ -1,5 +1,6 @@
 import logging
 from DatabaseConnector import Database
+from Helper import Keyboards
 
 
 class AdminPage:
@@ -44,7 +45,42 @@ class AdminPage:
             logging.error(
                 "Connection to API refused with error {0}".format(error_code))
 
-    def notify_all_users(msg):
+    def notify_all_users(self, msg):
         logging.debug('Send message to all users {0}'.format(msg))
         for user in self.db.get_all_users():
             self.bot.sendMessage(user.chat_id, str(msg))
+
+    def handle_admin_request(self, msg, id, steps):
+        step = steps.get(id, 0)
+        if msg == 'Admin Page':
+            self.bot.sendMessage(id, 'Welcome to Admin Page',
+                                 reply_markup=Keyboards.admin)
+        elif msg == 'See user list':
+            for user in self.db.get_all_users():
+                self.bot.sendMessage(id, '{0}\nname = {1} username = @{2}'.format(
+                    user.id, user.first_name, user.username
+                ), reply_markup=Keyboards.user_subscribtions(user.id))
+        elif msg == 'Send to all':
+            steps[id] = 4
+            self.bot.sendMessage(id, 'Enter your message',
+                                 reply_markup=Keyboards.cancel(0))
+        elif msg == 'Send to user':
+            steps[id] = 5
+            self.bot.sendMessage(id,
+                                 'Please enter user_id and your message',
+                                 reply_markup=Keyboards.cancel(0))
+        elif step in [4, 5]:
+            if step == 4:
+                for user in self.db.get_all_users():
+                    self.bot.sendMessage(user.id, msg)
+            elif step == 5:
+                uid, *_ = msg.split()
+                message = msg[len(uid) + 1:]
+                self.bot.sendMessage(uid, message)
+
+            steps[id] = 0
+            self.bot.sendMessage(id, 'Success', reply_markup=Keyboards.admin)
+        else:
+            return False
+
+        return True

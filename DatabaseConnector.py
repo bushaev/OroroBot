@@ -42,10 +42,10 @@ class UserModel(Base):
 class ShowModel(Base):
     __tablename__ = 'Shows_c'  # change
     id = Column(Integer, primary_key=True)
-    name = Column(String(150))
+    name = Column(String(150, collation='utf8_bin'))
     poster_url = Column(String(300))
     rating = Column(Integer)
-    desc = Column(String(500))
+    desc = Column(String(1000))
     idbm_id = Column(Integer)
     slug = Column(String(500))
     newest_video = Column(Integer)
@@ -59,8 +59,8 @@ class EpisodeModel(Base):
     id = Column(Integer, primary_key=True)
     show_id = Column(Integer, ForeignKey('Shows_c.id'))
     show = relationship(ShowModel)
-    name = Column(String(200))
-    desc = Column(String(1000))
+    name = Column(String(200, collation='utf8_bin'))
+    desc = Column(String(1000, collation='utf8_bin'))
     season = Column(Integer)
     number = Column(Integer)
 
@@ -76,7 +76,7 @@ class Database:
         def __init__(self):
             logging.info('Initializing database...')
             self.engine = create_engine(
-                'mysql+pymysql://root:chrome12@localhost:3306/test3?charset=utf8',
+                'mysql+pymysql://root:root@localhost:3306/test2?charset=utf8',
                 convert_unicode=True)
             Base.metadata.bind = self.engine
             Base.metadata.create_all()

@@ -82,7 +82,6 @@ class MessageHandler:
                 last_name = user['last_name']
             if 'username' in user:
                 username = user['username']
-            lan = 0
             self.db.add_user(id, chat_id, name, last_name, username)
             self.admin.notify_all('New user id : {0}\n name={1}\n '
                                   'last_name = {2}\n username=@{3}'.format(
@@ -92,13 +91,6 @@ class MessageHandler:
             us = self.db.get_user(id)
         else:
             lan = us.language
-
-        if lan is None:
-            self.bot.sendMessage(
-                id,
-                'Choose language',
-                reply_markup=Keyboards.languages)
-            return
 
         try:
             command = msg['text']
@@ -118,6 +110,11 @@ class MessageHandler:
                         id,
                         self.admin.is_admin(id)))
                 self.user_step[id] = 1
+            elif lan is None:
+                self.bot.sendMessage(
+                    id,
+                    'Choose language',
+                    reply_markup=Keyboards.languages)
             elif command in Messages.subscribe:
                 self.bot.sendMessage(id, Messages.enter_tv_show[lan],
                                      reply_markup=Keyboards.cancel(lan))
@@ -146,7 +143,8 @@ class MessageHandler:
                 for i, show in enumerate(us.shows_subscribed):
                     self.bot.sendMessage(id, str(i + 1) + '. ' + show.name)
             elif command in Messages.cancel:
-                if self.user_step[id] == 4 or self.user_step[id] == 5:
+                step = self.user_step.get(id, 0)
+                if step in [4, 5]:
                     self.user_step[id] = 0
                     self.bot.sendMessage(id, Messages.choose_action[lan],
                                          reply_markup=Keyboards.admin)
@@ -156,69 +154,28 @@ class MessageHandler:
                         id, self.admin.is_admin(id)))
             else:
                 is_admin = self.admin.is_admin(id)
+                step = self.user_step.get(id, 0)
                 if is_admin:
-                    if command == 'Admin Page':
-                        self.bot.sendMessage(id, 'Welcome to Admin Page',
-                                             reply_markup=Keyboards.admin)
+                    if self.admin.handle_admin_request(command, id,
+                                                       self.user_step):
                         return
-                    if command == 'See user list':
-                        for user in self.db.get_all_users():
-                            self.bot.sendMessage(id, '{0}\n{1}\n@{2}'.format(
-                                user.id, user.first_name, user.username
-                            ), reply_markup=Keyboards.user_subscribtions(user.id))
-                        return
-                    if command == 'Send to all':
-                        self.user_step[id] = 4
-                        self.bot.sendMessage(id, 'Enter your message',
-                                             reply_markup=Keyboards.cancel(0))
-                        return
-                    if command == 'Send to user':
-                        self.user_step[id] = 5
-                        self.bot.sendMessage(id,
-                                             'Please enter user_id and your message',
-                                             reply_markup=Keyboards.cancel(0))
-                        return
-                    if id in self.user_step: 
-                        if self.user_step[id] == 4:
-                            for user in self.db.get_all_users():
-                                self.bot.sendMessage(user.id, command)
-                        elif self.user_step[id] == 5:
-                                uid, *_ = command.split()
-                                message = command[len(uid) + 1:]
-                                self.bot.sendMessage(uid, message)
-                        elif self.user_step[id] == 2 or self.user_step[id] == 3:
-                            self.bot.sendMessage(id, Messages.possible_shows[lan],
-                                                 reply_markup=Keyboards.similar_shows(
-                                                     command, lan, self.user_step[id]))
-                        else:
-                            self.bot.sendMessage(id, Messages.dont_understand[lan],
-                                                    reply_markup=Keyboards.main(id,
-                                                                                is_admin))
-                            self.user_step[id] = 0
-                            return
-                                
-                            
+
+
+                if step in [2, 3]:
+                        self.bot.sendMessage(id, Messages.possible_shows[lan],
+                                             reply_markup=Keyboards.similar_shows(
+                                             command, lan, self.user_step[id]))
                         self.user_step[id] = 0
-                        self.bot.sendMessage(id, 'Success',
-                                             reply_markup=Keyboards.admin)
-                        return
-
-
-                if (id not in self.user_step or
-                        self.user_step[id] != 2 and
-                        self.user_step[id] != 3):
+                else:
                     self.bot.sendMessage(id, Messages.dont_understand[lan],
-                                         reply_markup=Keyboards.main(id,
-                                                                     is_admin))
+                                             reply_markup=Keyboards.main(id,
+                                             is_admin))
                     self.user_step[id] = 0
-                    return
-                self.bot.sendMessage(id, Messages.possible_shows[lan],
-                                     reply_markup=Keyboards.similar_shows(
-                    command, lan, self.user_step[id]))
 
-        except:
+
+        except Exception as e:
             if lan is None:
                 lan = 0
             self.bot.sendMessage(id, Messages.exception[lan])
-            import sys
-            self.admin.notify_one(sys.exc_info()[0])
+            self.admin.notify_one(str(e))
+            raise
