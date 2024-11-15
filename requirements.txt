@@ -1,4 +1,4 @@
-PyMySQL==0.7.9
+PyMySQL==1.1.1
 requests==2.13.0
 SQLAlchemy==1.1.5
 telepot==10.4
