@@ -2,4 +2,4 @@ PyMySQL==1.1.1
 requests==2.13.0
 SQLAlchemy==1.1.5
 telepot==10.4
-urllib3==1.26.5
+urllib3==1.26.19
